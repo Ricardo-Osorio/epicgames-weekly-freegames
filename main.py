@@ -53,8 +53,8 @@ def execute():
         try:
             # login succeeded
             # need to wait for element to be clickable
-            WebDriverWait(browser, TIMEOUT).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[contains(@class,'StoreCard') and contains(@href,'/store/en-US/product/')]"))
+            WebDriverWait(browser, LOGIN_TIMEOUT).until(
+                EC.visibility_of_element_located((By.XPATH, "//a[contains(@class,'StoreCard') and contains(@href,'/store/en-US/product/')]"))
             )
         except TimeoutException:
             # check if login failed
