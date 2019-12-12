@@ -54,9 +54,9 @@ def execute():
         try:
             # login succeeded
             # need to wait for element to be clickable
-            CURRENT_STEP = 'wait for visibility of the free games'
-            WebDriverWait(browser, LOGIN_TIMEOUT).until(
-                EC.visibility_of_element_located((By.XPATH, "//a[contains(@class,'StoreCard') and contains(@href,'/store/en-US/product/')]"))
+            CURRENT_STEP = 'wait for and get all free games available'
+            games_found = WebDriverWait(browser, LOGIN_TIMEOUT).until(
+                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/')]"))
             )
         except TimeoutException:
             # check if login failed
@@ -65,8 +65,6 @@ def execute():
             print('failed to login into account, credentials invalid')
             return
 
-        CURRENT_STEP = 'get all free games available'
-        games_found = browser.find_elements_by_xpath("//a[contains(@class,'StoreCard') and contains(@href,'/store/en-US/product/')]")
         if len(games_found) < 1:
             print('no free games found')
             return
@@ -114,7 +112,7 @@ def execute():
 
                 # wait until its visible and then click the 'I Agree" popup
                 # 'Refund and Right of Withdrawal Information' popup
-                CURRENT_STEP = 'accept the conditions of refund dialog'
+                CURRENT_STEP = 'accept the conditions of refund popup'
                 WebDriverWait(browser, TIMEOUT).until(
                     EC.visibility_of_all_elements_located((By.XPATH, "//button[contains(@class,'btn-primary')]"))
                 )[1].click()
