@@ -68,9 +68,23 @@ def execute():
         if len(games_found) < 1:
             print('no free games found')
             return
-        for i, free_game in enumerate(games_found):
+        for i in range(len(games_found)):
+            # need to wait for element to be clickable
+            CURRENT_STEP = 'wait for and get all free games available'
+            games_found = WebDriverWait(browser, TIMEOUT).until(
+                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/')]"))
+            )
+
             # select game
-            free_game.click()
+            games_found[i].click()
+
+            # mature content block
+            CURRENT_STEP = 'bypass mature content block'
+            try:
+                WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((By.XPATH, "//p[contains(text(),'mature content')]")))
+                WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((By.XPATH, "//span[contains(text(),'Continue')]"))).click()
+            except TimeoutException:
+                pass
 
             # need to wait for element to be visible (it's not clickable if already owned)
             CURRENT_STEP = 'find the purchase button'
