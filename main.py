@@ -56,7 +56,7 @@ def execute():
             # need to wait for element to be clickable
             CURRENT_STEP = 'wait for and get all free games available'
             games_found = WebDriverWait(browser, LOGIN_TIMEOUT).until(
-                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/')]"))
+                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/')]/parent::div/parent::div"))
             )
         except TimeoutException:
             # check if login failed
@@ -72,10 +72,14 @@ def execute():
             # need to wait for element to be clickable
             CURRENT_STEP = 'wait for and get all free games available'
             games_found = WebDriverWait(browser, TIMEOUT).until(
-                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/')]"))
+                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/')]/parent::div/parent::div"))
             )
 
-            # select game
+            # filter results as there may be other games on this page (not part of the free games)
+            if not games_found[i].text.startswith('FREE NOW'):
+                continue
+
+            # click game
             games_found[i].click()
 
             # mature content block
