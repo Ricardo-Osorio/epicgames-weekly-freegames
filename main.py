@@ -56,7 +56,7 @@ def execute():
             # need to wait for element to be clickable
             CURRENT_STEP = 'wait for and get all free games available'
             games_found = WebDriverWait(browser, LOGIN_TIMEOUT).until(
-                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/')]/parent::div/parent::div"))
+                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/') and contains(@aria-label,'Free')]/parent::div/parent::div"))
             )
         except TimeoutException:
             # check if login failed
@@ -65,14 +65,19 @@ def execute():
             print('failed to login into account, credentials invalid')
             return
 
+        # close cookie policy span as that interferes with clicking on the purchase button
+        CURRENT_STEP = 'close the cookies banner'
+        browser.find_element_by_xpath("//button[@id='euCookieAccept']").click()
+
         if len(games_found) < 1:
             print('no free games found')
             return
+
         for i in range(len(games_found)):
             # need to wait for element to be clickable
             CURRENT_STEP = 'wait for and get all free games available'
             games_found = WebDriverWait(browser, TIMEOUT).until(
-                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/')]/parent::div/parent::div"))
+                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/') and contains(@aria-label,'Free')]/parent::div/parent::div"))
             )
 
             # filter results as there may be other games on this page (not part of the free games)
@@ -114,9 +119,6 @@ def execute():
             elif purchase_button.text == 'GET':
                 print('obtaining game ' + name)
 
-                # close cookie policy span as that interferes with button click
-                CURRENT_STEP = 'close the cookies banner'
-                browser.find_element_by_xpath("//button[@id='euCookieAccept']").click()
                 # scroll to button
                 CURRENT_STEP = 'scrol to purchase button and click it'
                 ActionChains(browser).move_to_element(purchase_button).perform()
