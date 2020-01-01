@@ -120,7 +120,7 @@ def execute():
                 print('obtaining game ' + name)
 
                 # scroll to button
-                CURRENT_STEP = 'scrol to purchase button and click it'
+                CURRENT_STEP = 'scroll to purchase button and click it'
                 ActionChains(browser).move_to_element(purchase_button).perform()
                 purchase_button.click()
 
@@ -143,6 +143,8 @@ def execute():
                     EC.visibility_of_element_located((By.XPATH, "//span[contains(text(),'Thank you for buying')]"))
                 )
                 print('obtained game {}. Price was {} and {}'.format(name, price, expires))
+            elif purchase_button.text == 'SEE EDITIONS':
+                print('game ' + name + ' has different editions available, this is not yet supported')
             else:
                 print('purchase button text not recognized: ' + purchase_button.text)
 
