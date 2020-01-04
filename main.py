@@ -66,8 +66,11 @@ def execute():
             return
 
         # close cookie policy span as that interferes with clicking on the purchase button
-        CURRENT_STEP = 'close the cookies banner'
-        browser.find_element_by_xpath("//button[@id='euCookieAccept']").click()
+        try:
+            CURRENT_STEP = 'close the cookies banner'
+            browser.find_element_by_xpath("//button[@id='euCookieAccept']").click()
+        except:
+            print('no cookies banner to close')
 
         if len(games_found) < 1:
             print('no free games found')
@@ -132,10 +135,13 @@ def execute():
 
                 # wait until its visible and then click the 'I Agree" popup
                 # 'Refund and Right of Withdrawal Information' popup
-                CURRENT_STEP = 'accept the conditions of refund popup'
-                WebDriverWait(browser, TIMEOUT).until(
-                    EC.visibility_of_all_elements_located((By.XPATH, "//button[contains(@class,'btn-primary')]"))
-                )[1].click()
+                try:
+                    CURRENT_STEP = 'accept the conditions of refund popup'
+                    WebDriverWait(browser, TIMEOUT).until(
+                        EC.visibility_of_all_elements_located((By.XPATH, "//button[contains(@class,'btn-primary')]"))
+                    )[1].click()
+                except:
+                    print('no refund conditions popup to accept')
 
                 # need to wait for the "thank you" message before proceding
                 CURRENT_STEP = 'wait for page thanking for the purchase'
@@ -153,7 +159,7 @@ def execute():
         print('all games processed')
     except (TimeoutException, NoSuchElementException, WebDriverException) as ex:
         print('failed on step \"' + CURRENT_STEP + '\". DOM may have been updated. Exception message: ' + str(ex))
-        browser.close()
+    browser.close()
 
 
 def main():
