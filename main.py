@@ -69,7 +69,7 @@ def execute():
         try:
             CURRENT_STEP = 'close the cookies banner'
             browser.find_element_by_xpath("//button[@id='euCookieAccept']").click()
-        except:
+        except NoSuchElementException:
             print('no cookies banner to close')
 
         if len(games_found) < 1:
@@ -140,7 +140,7 @@ def execute():
                     WebDriverWait(browser, TIMEOUT).until(
                         EC.visibility_of_all_elements_located((By.XPATH, "//button[contains(@class,'btn-primary')]"))
                     )[1].click()
-                except:
+                except NoSuchElementException:
                     print('no refund conditions popup to accept')
 
                 # need to wait for the "thank you" message before proceding
