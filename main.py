@@ -21,7 +21,7 @@ def read_env_variables():
 
     EMAIL = os.getenv('EMAIL') or ""
     PASSWORD = os.getenv('PASSWORD') or ""
-    LOGLEVEL = str.upper(os.getenv('LOGLEVEL') or "INFO")
+    LOGLEVEL = str.upper(os.getenv('LOGLEVEL'))
 
 
 def execute():
@@ -168,7 +168,7 @@ def main():
     logger = logging.getLogger('egs-weekly-freegames')
     read_env_variables()
     logging.basicConfig(level=logging.ERROR)
-    logger.setLevel(getattr(logging, LOGLEVEL))
+    logger.setLevel(getattr(logging, LOGLEVEL, "INFO"))
     if EMAIL == "" or PASSWORD == "":
         print('credentials missing')
         return
