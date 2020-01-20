@@ -1,4 +1,5 @@
 import os
+import time
 import logging
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -12,7 +13,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 
 def read_env_variables():
-    global TIMEOUT, LOGIN_TIMEOUT, EMAIL, PASSWORD, LOGLEVEL
+    global TIMEOUT, LOGIN_TIMEOUT, EMAIL, PASSWORD, LOGLEVEL, SLEEPTIME
 
     value = os.getenv('TIMEOUT') or 5
     TIMEOUT = int(value)
@@ -22,6 +23,7 @@ def read_env_variables():
     EMAIL = os.getenv('EMAIL') or ""
     PASSWORD = os.getenv('PASSWORD') or ""
     LOGLEVEL = str.upper(os.getenv('LOGLEVEL'))
+    SLEEPTIME = int(os.getenv('SLEEPTIME') or -1)
 
 
 def execute():
@@ -174,6 +176,10 @@ def main():
         return
     logger.debug('started with TIMEOUT: %i, LOGIN_TIMEOUT: %i, EMAIL: %s, password: %s', TIMEOUT, LOGIN_TIMEOUT, EMAIL, len(PASSWORD)*"*")
     execute()
+    while SLEEPTIME >= 0:
+        logger.info('sleeping for %i seconds', SLEEPTIME)
+        time.sleep(SLEEPTIME)
+        execute()
 
 
 if __name__ == '__main__':
