@@ -19,9 +19,9 @@ def read_env_variables():
     value = os.getenv('LOGIN_TIMEOUT') or 10
     LOGIN_TIMEOUT = int(value)
 
-    EMAIL = os.getenv('EMAIL') or ""
-    PASSWORD = os.getenv('PASSWORD') or ""
-    LOGLEVEL = str.upper(os.getenv('LOGLEVEL'))
+    EMAIL = os.getenv('EMAIL') or ''
+    PASSWORD = os.getenv('PASSWORD') or ''
+    LOGLEVEL = str.upper(os.getenv('LOGLEVEL') or '')
 
 
 def execute():
@@ -143,7 +143,7 @@ def execute():
                 except (NoSuchElementException, LookupError) as ex:
                     logger.debug('no refund conditions popup to accept')
 
-                # need to wait for the "thank you" message before proceding
+                # need to wait for the "thank you" message before proceeding
                 logger.debug('wait for page thanking for the purchase')
                 WebDriverWait(browser, TIMEOUT).until(
                     EC.visibility_of_element_located((By.XPATH, "//span[contains(text(),'Thank you for buying')]"))
