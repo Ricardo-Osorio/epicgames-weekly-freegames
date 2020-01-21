@@ -31,7 +31,7 @@ def execute():
     chrome_options.add_argument('--disable-dev-shm-usage')
 
     browser = webdriver.Chrome('/usr/bin/chromedriver', options=chrome_options)
-    browser.get('https://www.epicgames.com/store/en-US/collection/free-games-collection/')
+    browser.get('https://www.epicgames.com/store/en-US/free-games/')
 
     try:
         # need to wait for element to be clickable
@@ -155,7 +155,7 @@ def execute():
                 logger.warning('purchase button text not recognized: %s', purchase_button.text)
 
             # navigate back to free games page
-            browser.get('https://www.epicgames.com/store/en-US/collection/free-games-collection/')
+            browser.get('https://www.epicgames.com/store/en-US/free-games/')
         logger.info('all games processed')
     except (TimeoutException, NoSuchElementException, WebDriverException) as ex:
         logger.critical(str(ex))
