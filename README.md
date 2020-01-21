@@ -30,9 +30,29 @@ docker run -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
 Replacing the environment variables `EMAIL` and `PASSWORD` for your epicgames store credentials.
 
 ## Optional configuration
-You can also specify two extra environmente variables `TIMEOUT` and `LOGIN_TIMEOUT` if you have a slow internet connection speed and want to make sure it won't affect the result of the script. `LOGLEVEL` can be used to specify the [log level](https://docs.python.org/3.7/library/logging.html#logging-levels) to log.
+You can also specify two extra environmente variables `TIMEOUT` and `LOGIN_TIMEOUT` if you have a slow internet connection speed and want to make sure it won't affect the result of the script. `LOGLEVEL` can be used to specify the [log level](https://docs.python.org/3.7/library/logging.html#logging-levels) to log. `SLEEPTIME` can be used to set the number of seconds to wait between looping through the procedure again. Defaults to -1, which will stop execution after a single iteration.
 Run a docker container with these:
 ```
-docker run -e TIMEOUT=10 -e LOGIN_TIMEOUT=15 -e LOGLEVEL=DEBUG -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
+docker run -e TIMEOUT=10 -e LOGIN_TIMEOUT=15 -e LOGLEVEL=DEBUG -e SLEEPTIME=43200 -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
 ```
 These environmente variables have a default value of `TIMEOUT = 5` and `LOGIN_TIMEOUT = 10`.
+
+## Docker Compose
+```
+version: '2'
+
+services:
+
+    egs-freegame:
+        build:
+            context: ./epicgames-weekly-freegames/
+            dockerfile: Dockerfile
+        restart: always
+        environment:
+            - TIMEOUT=10
+            - LOGIN_TIMEOUT=15
+            - SLEEPTIME=43200
+            - LOGLEVEL=DEBUG
+            - EMAIL=example@example.com
+            - PASSWORD=password123
+```
