@@ -22,8 +22,9 @@ def read_env_variables():
 
     EMAIL = os.getenv('EMAIL') or ""
     PASSWORD = os.getenv('PASSWORD') or ""
-    LOGLEVEL = str.upper(os.getenv('LOGLEVEL'))
+    LOGLEVEL = str.upper(os.getenv('LOGLEVEL') or '')
     SLEEPTIME = int(os.getenv('SLEEPTIME') or -1)
+
 
 
 def execute():
@@ -33,7 +34,7 @@ def execute():
     chrome_options.add_argument('--disable-dev-shm-usage')
 
     browser = webdriver.Chrome('/usr/bin/chromedriver', options=chrome_options)
-    browser.get('https://www.epicgames.com/store/en-US/collection/free-games-collection/')
+    browser.get('https://www.epicgames.com/store/en-US/free-games/')
 
     try:
         # need to wait for element to be clickable
@@ -145,7 +146,7 @@ def execute():
                 except (NoSuchElementException, LookupError) as ex:
                     logger.debug('no refund conditions popup to accept')
 
-                # need to wait for the "thank you" message before proceding
+                # need to wait for the "thank you" message before proceeding
                 logger.debug('wait for page thanking for the purchase')
                 WebDriverWait(browser, TIMEOUT).until(
                     EC.visibility_of_element_located((By.XPATH, "//span[contains(text(),'Thank you for buying')]"))
@@ -157,7 +158,7 @@ def execute():
                 logger.warning('purchase button text not recognized: %s', purchase_button.text)
 
             # navigate back to free games page
-            browser.get('https://www.epicgames.com/store/en-US/collection/free-games-collection/')
+            browser.get('https://www.epicgames.com/store/en-US/free-games/')
         logger.info('all games processed')
     except (TimeoutException, NoSuchElementException, WebDriverException) as ex:
         logger.critical(str(ex))
