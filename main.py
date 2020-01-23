@@ -20,8 +20,8 @@ def read_env_variables():
     value = os.getenv('LOGIN_TIMEOUT') or 10
     LOGIN_TIMEOUT = int(value)
 
-    EMAIL = os.getenv('EMAIL') or ""
-    PASSWORD = os.getenv('PASSWORD') or ""
+    EMAIL = os.getenv('EMAIL') or ''
+    PASSWORD = os.getenv('PASSWORD') or ''
     LOGLEVEL = str.upper(os.getenv('LOGLEVEL') or '')
     SLEEPTIME = int(os.getenv('SLEEPTIME') or -1)
 
