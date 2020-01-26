@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+    egs-freegame:
+        container_name: egs-freegame
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        restart: always
+        environment:
+            - TIMEOUT=10
+            - LOGIN_TIMEOUT=15
+            - SLEEPTIME=43200
+            - LOGLEVEL=DEBUG
+            - EMAIL=example@example.com
+            - PASSWORD=password123
