@@ -1,4 +1,3 @@
-`Still in development`
 # Automatically get the epicgames store weekly free games
 I like free games but I don't like repeating the same process over and over again when it can be automated... And that's why I made this!
 
@@ -30,12 +29,18 @@ docker run -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
 Replacing the environment variables `EMAIL` and `PASSWORD` for your epicgames store credentials.
 
 ## Optional configuration
-You can also specify two extra environmente variables `TIMEOUT` and `LOGIN_TIMEOUT` if you have a slow internet connection speed and want to make sure it won't affect the result of the script. `LOGLEVEL` can be used to specify the [log level](https://docs.python.org/3.7/library/logging.html#logging-levels) to log. `SLEEPTIME` can be used to set the number of seconds to wait between looping through the procedure again. Defaults to -1, which will stop execution after a single iteration.
-Run a docker container with these:
+Different options can be provided to alter the output or execution of the program. All available options are:
+
+- `TIMEOUT` and `LOGIN_TIMEOUT` if you have a slow internet connection speed and want to make sure it won't affect the result of the script. Defaults to `TIMEOUT = 5` and `LOGIN_TIMEOUT = 10`.
+
+- `LOGLEVEL` can be used to specify the [log level](https://docs.python.org/3.7/library/logging.html#logging-levels) to log. Defaults to `INFO`
+
+- `SLEEPTIME` can be used to set the number of seconds to wait between looping through the procedure again. Defaults to `-1`, which will stop execution after a single iteration.
+
+Running a docker container with these:
 ```
-docker run -e TIMEOUT=10 -e LOGIN_TIMEOUT=15 -e LOGLEVEL=DEBUG -e SLEEPTIME=43200 -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
+docker run -e TIMEOUT=15 -e LOGIN_TIMEOUT=20 -e LOGLEVEL=DEBUG -e SLEEPTIME=43200 -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
 ```
-These environmente variables have a default value of `TIMEOUT = 5` and `LOGIN_TIMEOUT = 10`.
 
 ## Docker Compose
 ```
