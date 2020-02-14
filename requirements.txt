@@ -1,0 +1,2 @@
+selenium==3.141
+pyotp==2.3

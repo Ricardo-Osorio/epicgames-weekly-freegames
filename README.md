@@ -37,6 +37,8 @@ Different options can be provided to alter the output or execution of the progra
 
 - `SLEEPTIME` can be used to set the number of seconds to wait between looping through the procedure again. Defaults to `-1`, which will stop execution after a single iteration.
 
+- `TOTP` is used to log in to an account protected with 2FA. If you have 2FA enabled already, you may have to redo it in order for to obtain your TOTP token. Go [here](https://www.epicgames.com/account/password) to enable 2FA. Click "enable authenticator app." In the section labeled "manual entry key," copy the key. Then use your authenticator app to add scan the QR code. Activate 2FA by completing the form and clicking activate. Once 2FA is enabled, use the key you copied as the value for the `TOTP` parameter.
+
 Running a docker container with these:
 ```
 docker run -e TIMEOUT=15 -e LOGIN_TIMEOUT=20 -e LOGLEVEL=DEBUG -e SLEEPTIME=43200 -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames

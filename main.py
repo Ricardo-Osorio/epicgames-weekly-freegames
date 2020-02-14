@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import pyotp
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,7 +14,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 
 def read_env_variables():
-    global TIMEOUT, LOGIN_TIMEOUT, EMAIL, PASSWORD, LOGLEVEL, SLEEPTIME
+    global TIMEOUT, LOGIN_TIMEOUT, EMAIL, PASSWORD, LOGLEVEL, SLEEPTIME, TOTP
 
     value = os.getenv('TIMEOUT') or 5
     TIMEOUT = int(value)
@@ -24,6 +25,8 @@ def read_env_variables():
     PASSWORD = os.getenv('PASSWORD') or ''
     LOGLEVEL = str.upper(os.getenv('LOGLEVEL') or '')
     SLEEPTIME = int(os.getenv('SLEEPTIME') or -1)
+    value = os.getenv('TOTP') or None
+    TOTP = None if value == None else pyotp.TOTP(value)
 
 
 
@@ -53,6 +56,15 @@ def execute():
         el.send_keys(EMAIL)
         browser.find_element_by_id('password').send_keys(PASSWORD)
         browser.find_element_by_id('login').click()
+
+        if TOTP != None:
+            logger.debug('wait for 2fa field on login page')
+            el = WebDriverWait(browser, TIMEOUT).until(
+                EC.element_to_be_clickable((By.ID, "code"))
+            )
+            el.send_keys(TOTP.now())
+            logger.debug('logging in with 2fa')
+            browser.find_element_by_id('continue').click()
 
         try:
             # login succeeded
