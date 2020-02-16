@@ -1,11 +1,11 @@
-FROM python:3.7-alpine3.8
+FROM python:3.7-alpine3.11
 
 # expose port
 EXPOSE 8000
 
 # update apk repo
-RUN echo "http://dl-4.alpinelinux.org/alpine/v3.8/main" >> /etc/apk/repositories && \
-    echo "http://dl-4.alpinelinux.org/alpine/v3.8/community" >> /etc/apk/repositories
+RUN echo "http://dl-4.alpinelinux.org/alpine/v3.11/main" >> /etc/apk/repositories && \
+    echo "http://dl-4.alpinelinux.org/alpine/v3.11/community" >> /etc/apk/repositories
 
 # install chromedriver
 RUN apk update \
