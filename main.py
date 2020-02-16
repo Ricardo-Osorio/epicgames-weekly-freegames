@@ -2,6 +2,7 @@ import os
 import time
 import logging
 import pyotp
+import traceback
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -50,12 +51,14 @@ def execute():
         # need to wait for element to be clickable
         logger.debug('wait for email field on login page')
         el = WebDriverWait(browser, TIMEOUT).until(
-            EC.element_to_be_clickable((By.ID, "email"))
+            EC.element_to_be_clickable((By.ID, "usernameOrEmail"))
         )
 
         el.send_keys(EMAIL)
         browser.find_element_by_id('password').send_keys(PASSWORD)
-        browser.find_element_by_id('login').click()
+        WebDriverWait(browser, TIMEOUT).until(
+            EC.element_to_be_clickable((By.ID, 'login'))
+        ).click()
 
         if TOTP != None:
             logger.debug('wait for 2fa field on login page')
@@ -71,7 +74,7 @@ def execute():
             # need to wait for element to be clickable
             logger.debug('wait for and get all free games available')
             games_found = WebDriverWait(browser, LOGIN_TIMEOUT).until(
-                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/') and contains(@aria-label,'Free')]/parent::div/parent::div"))
+                EC.visibility_of_all_elements_located((By.XPATH, "//a[descendant::span[text()='Free Now']]"))
             )
         except TimeoutException:
             # check if login failed
@@ -95,12 +98,8 @@ def execute():
             # need to wait for element to be clickable
             logger.debug('wait for and get all free games available')
             games_found = WebDriverWait(browser, TIMEOUT).until(
-                EC.visibility_of_all_elements_located((By.XPATH, "//a[contains(@class,'Card-root') and contains(@href,'/store/en-US/product/') and contains(@aria-label,'Free')]/parent::div/parent::div"))
+                EC.visibility_of_all_elements_located((By.XPATH, "//a[descendant::span[text()='Free Now']]"))
             )
-
-            # filter results as there may be other games on this page (not part of the free games)
-            if not games_found[i].text.startswith('FREE NOW'):
-                continue
 
             # click game
             games_found[i].click()
@@ -158,10 +157,10 @@ def execute():
                 except (NoSuchElementException, LookupError) as ex:
                     logger.debug('no refund conditions popup to accept')
 
-                # need to wait for the "thank you" message before proceeding
-                logger.debug('wait for page thanking for the purchase')
+                # Purchase should be complete. Checking for confirmation
+                logger.debug('Wait for confirmation that checkout is complete')
                 WebDriverWait(browser, TIMEOUT).until(
-                    EC.visibility_of_element_located((By.XPATH, "//span[contains(text(),'Thank you for buying')]"))
+                    EC.visibility_of_element_located((By.XPATH, "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"))
                 )
                 logger.info('obtained game %s. Price was %s and %s', name, price, expires)
             elif purchase_button.text == 'SEE EDITIONS':
@@ -173,7 +172,7 @@ def execute():
             browser.get('https://www.epicgames.com/store/en-US/free-games/')
         logger.info('all games processed')
     except (TimeoutException, NoSuchElementException, WebDriverException) as ex:
-        logger.critical(str(ex))
+        logger.critical(traceback.format_exc())
     browser.get('https://www.epicgames.com/logout')
     browser.close()
 
