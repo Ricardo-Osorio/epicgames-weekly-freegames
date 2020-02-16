@@ -8,14 +8,13 @@ RUN echo "http://dl-4.alpinelinux.org/alpine/v3.8/main" >> /etc/apk/repositories
     echo "http://dl-4.alpinelinux.org/alpine/v3.8/community" >> /etc/apk/repositories
 
 # install chromedriver
-RUN apk update
-RUN apk add chromium chromium-chromedriver
+RUN apk update \
+ && apk add chromium chromium-chromedriver
 
-# upgrade pip
-RUN pip install --upgrade pip
-
-# install selenium
-RUN pip install selenium
+# upgrade pip and install requirements.txt
+ADD requirements.txt .
+RUN pip install --upgrade pip \
+ && pip install -r requirements.txt
 
 # add the script to where selenium is installed
 ADD main.py /usr/local/lib/python3.7/site-packages

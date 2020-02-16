@@ -1,4 +1,3 @@
-`Still in development`
 # Automatically get the epicgames store weekly free games
 I like free games but I don't like repeating the same process over and over again when it can be automated... And that's why I made this!
 
@@ -30,9 +29,37 @@ docker run -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
 Replacing the environment variables `EMAIL` and `PASSWORD` for your epicgames store credentials.
 
 ## Optional configuration
-You can also specify two extra environmente variables `TIMEOUT` and `LOGIN_TIMEOUT` if you have a slow internet connection speed and want to make sure it won't affect the result of the script. `LOGLEVEL` can be used to specify the [log level](https://docs.python.org/3.7/library/logging.html#logging-levels) to log.
-Run a docker container with these:
+Different options can be provided to alter the output or execution of the program. All available options are:
+
+- `TIMEOUT` and `LOGIN_TIMEOUT` if you have a slow internet connection speed and want to make sure it won't affect the result of the script. Defaults to `TIMEOUT = 5` and `LOGIN_TIMEOUT = 10`.
+
+- `LOGLEVEL` can be used to specify the [log level](https://docs.python.org/3.7/library/logging.html#logging-levels) to log. Defaults to `INFO`
+
+- `SLEEPTIME` can be used to set the number of seconds to wait between looping through the procedure again. Defaults to `-1`, which will stop execution after a single iteration.
+
+- `TOTP` is used to log in to an account protected with 2FA. If you have 2FA enabled already, you may have to redo it in order for to obtain your TOTP token. Go [here](https://www.epicgames.com/account/password) to enable 2FA. Click "enable authenticator app." In the section labeled "manual entry key," copy the key. Then use your authenticator app to add scan the QR code. Activate 2FA by completing the form and clicking activate. Once 2FA is enabled, use the key you copied as the value for the `TOTP` parameter.
+
+Running a docker container with these:
 ```
-docker run -e TIMEOUT=10 -e LOGIN_TIMEOUT=15 -e LOGLEVEL=DEBUG -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
+docker run -e TIMEOUT=15 -e LOGIN_TIMEOUT=20 -e LOGLEVEL=DEBUG -e SLEEPTIME=43200 -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
 ```
-These environmente variables have a default value of `TIMEOUT = 5` and `LOGIN_TIMEOUT = 10`.
+
+## Docker Compose
+```
+version: '2'
+
+services:
+
+    egs-freegame:
+        build:
+            context: ./epicgames-weekly-freegames/
+            dockerfile: Dockerfile
+        restart: always
+        environment:
+            - TIMEOUT=10
+            - LOGIN_TIMEOUT=15
+            - SLEEPTIME=43200
+            - LOGLEVEL=DEBUG
+            - EMAIL=example@example.com
+            - PASSWORD=password123
+```
