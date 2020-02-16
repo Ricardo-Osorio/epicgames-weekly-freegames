@@ -15,7 +15,10 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 
 def read_env_variables():
-    global TIMEOUT, LOGIN_TIMEOUT, EMAIL, PASSWORD, LOGLEVEL, SLEEPTIME, TOTP
+    global TIMEOUT, LOGIN_TIMEOUT, EMAIL, PASSWORD, LOGLEVEL, SLEEPTIME, TOTP, DEBUG
+
+    # dev environment
+    DEBUG = os.getenv('DEBUG') is not None
 
     value = os.getenv('TIMEOUT') or 5
     TIMEOUT = int(value)
@@ -27,17 +30,24 @@ def read_env_variables():
     LOGLEVEL = str.upper(os.getenv('LOGLEVEL') or '')
     SLEEPTIME = int(os.getenv('SLEEPTIME') or -1)
     value = os.getenv('TOTP') or None
-    TOTP = None if value == None else pyotp.TOTP(value)
-
+    TOTP = None if value is None else pyotp.TOTP(value)
 
 
 def execute():
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    if not DEBUG:
+        chrome_options.add_argument('--headless')
+    # bypass OS security model
     chrome_options.add_argument('--no-sandbox')
+    # overcome limited resource problems
     chrome_options.add_argument('--disable-dev-shm-usage')
 
-    browser = webdriver.Chrome('/usr/bin/chromedriver', options=chrome_options)
+    chrome_driver_path = '/usr/bin/chromedriver'
+    if DEBUG:
+        # path when run inside docker container
+        chrome_driver_path = './chromedriver'
+
+    browser = webdriver.Chrome(chrome_driver_path, options=chrome_options)
     browser.get('https://www.epicgames.com/store/en-US/free-games/')
 
     try:
@@ -60,7 +70,7 @@ def execute():
             EC.element_to_be_clickable((By.ID, 'login'))
         ).click()
 
-        if TOTP != None:
+        if TOTP is not None:
             logger.debug('wait for 2fa field on login page')
             el = WebDriverWait(browser, TIMEOUT).until(
                 EC.element_to_be_clickable((By.ID, "code"))
@@ -107,8 +117,10 @@ def execute():
             # mature content block
             logger.debug('bypass mature content block')
             try:
-                WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((By.XPATH, "//p[contains(text(),'mature content')]")))
-                WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((By.XPATH, "//span[contains(text(),'Continue')]"))).click()
+                WebDriverWait(browser, TIMEOUT).until(
+                    EC.visibility_of_element_located((By.XPATH, "//p[contains(text(),'mature content')]")))
+                WebDriverWait(browser, TIMEOUT).until(
+                    EC.visibility_of_element_located((By.XPATH, "//span[contains(text(),'Continue')]"))).click()
             except TimeoutException:
                 logger.debug('no mature content block to bypass')
 
@@ -123,11 +135,11 @@ def execute():
             logger.debug('find the game title')
             name = browser.find_element_by_xpath("//h1[contains(@class,'NavigationVertical')]").text
 
-            # price formated as '£11.99'
+            # price formatted as '£11.99'
             logger.debug('find the game price')
             price = browser.find_element_by_xpath("//s").text
 
-            # date formated as 'Sale ends 11/29/2019 at 3:59 PM'
+            # date formatted as 'Sale ends 11/29/2019 at 3:59 PM'
             logger.debug('extract aditional info from the purchase button')
             expires = browser.find_element_by_xpath("//span[contains(text(),'Sale ends')]").text
 
@@ -159,9 +171,9 @@ def execute():
 
                 # Purchase should be complete. Checking for confirmation
                 logger.debug('Wait for confirmation that checkout is complete')
-                WebDriverWait(browser, TIMEOUT).until(
-                    EC.visibility_of_element_located((By.XPATH, "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"))
-                )
+                WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((
+                    By.XPATH, "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"
+                )))
                 logger.info('obtained game %s. Price was %s and %s', name, price, expires)
             elif purchase_button.text == 'SEE EDITIONS':
                 logger.warning('game %s has different editions available, this is not yet supported', name)
@@ -186,7 +198,10 @@ def main():
     if EMAIL == "" or PASSWORD == "":
         print('credentials missing')
         return
-    logger.debug('started with TIMEOUT: %i, LOGIN_TIMEOUT: %i, EMAIL: %s, password: %s', TIMEOUT, LOGIN_TIMEOUT, EMAIL, len(PASSWORD)*"*")
+    logger.debug(
+        'started with TIMEOUT: %i, LOGIN_TIMEOUT: %i, EMAIL: %s, password: %s',
+        TIMEOUT, LOGIN_TIMEOUT, EMAIL, len(PASSWORD) * "*",
+    )
     execute()
     while SLEEPTIME >= 0:
         logger.info('sleeping for %i seconds', SLEEPTIME)

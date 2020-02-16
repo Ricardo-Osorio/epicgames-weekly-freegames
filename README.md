@@ -39,6 +39,8 @@ Different options can be provided to alter the output or execution of the progra
 
 - `TOTP` is used to log in to an account protected with 2FA. If you have 2FA enabled already, you may have to redo it in order for to obtain your TOTP token. Go [here](https://www.epicgames.com/account/password) to enable 2FA. Click "enable authenticator app." In the section labeled "manual entry key," copy the key. Then use your authenticator app to add scan the QR code. Activate 2FA by completing the form and clicking activate. Once 2FA is enabled, use the key you copied as the value for the `TOTP` parameter.
 
+- `DEBUG` allows the script to be run locally without having to manually edit the chromedriver path (instead will searches in the current dir) and will ignore the headless flag when starting up chrome. Only checks for the presence of this environment variable, its value is not interpreted.
+
 Running a docker container with these:
 ```
 docker run -e TIMEOUT=15 -e LOGIN_TIMEOUT=20 -e LOGLEVEL=DEBUG -e SLEEPTIME=43200 -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
