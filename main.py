@@ -131,7 +131,6 @@ def execute():
             )
 
             # name of the game (responsive UI element)
-            # will only find it when width < 1024 (default window size is 800x600 when run in headless mode)
             logger.debug('find the game title')
             name = browser.find_element_by_xpath("//h1[contains(@class,'NavigationVertical')]").text
 
@@ -176,14 +175,16 @@ def execute():
                 )))
                 logger.info('obtained game %s. Price was %s and %s', name, price, expires)
             elif purchase_button.text == 'SEE EDITIONS':
-                editions_addons_buttons = WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_all_elements_located((
-                    By.XPATH, "//div[contains(@class,'Editions') or contains(@class, 'AddOns')]//div[contains(@class,'PurchaseButton-ctaButtons')]//button"
-                )))
-                for t in range(len(editions_addons_buttons)):
-                    editions_addons_titles = WebDriverWait(browser, TIMEOUT).until(
-                        EC.visibility_of_all_elements_located((
-                            By.XPATH, "//div[contains(@class,'Editions-title') or contains(@class, 'AddOns-title')]"
-                        )))
+                # used to know the number of elements and titles
+                # without having to query on every refresh
+                editions_addons_titles = WebDriverWait(browser, TIMEOUT).until(
+                    EC.visibility_of_all_elements_located((
+                        By.XPATH, "//div[contains(@class,'Editions-title') or contains(@class, 'AddOns-title')]"
+                    )))
+                for x in range(len(editions_addons_titles)):
+                    editions_addons_titles[x] = editions_addons_titles[x].text
+
+                for t in range(len(editions_addons_titles)):
                     editions_addons_buttons = WebDriverWait(browser, TIMEOUT).until(
                         EC.visibility_of_all_elements_located((
                             By.XPATH,
@@ -209,29 +210,18 @@ def execute():
                         except (NoSuchElementException, LookupError) as ex:
                             logger.debug('no refund conditions popup to accept')
 
-                        # Purchase should be complete. Checking for confirmation
                         logger.debug('Wait for confirmation that checkout is complete')
 
-                        # this is failing every time
-                        try:
-                            WebDriverWait(browser, LOGIN_TIMEOUT).until(EC.visibility_of_element_located((
-                                By.XPATH,
-                                "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"
-                            )))
-                        except (StaleElementReferenceException, TimeoutException) as e:
-                            # test if javascript refreshes the element in the meanwhile, which
-                            # requires another query
-                            try:
-                                WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((
-                                    By.XPATH,
-                                    "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"
-                                )))
-                            except (StaleElementReferenceException, TimeoutException) as e:
-                                pass
-                        logger.info('obtained edition/extra %s.', editions_addons_titles[t].text)
+                        # Purchase should be complete. Checking for confirmation
+                        WebDriverWait(browser, LOGIN_TIMEOUT).until(EC.visibility_of_element_located((
+                            By.XPATH,
+                            "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"
+                        )))
+
+                        logger.info('obtained edition/extra %s.', editions_addons_titles[t])
                         browser.execute_script("window.history.go(-1)")
                     elif editions_addons_buttons[t].text == 'OWNED':
-                        logger.info('edition/addon %s already owned.', editions_addons_titles[t].text)
+                        logger.info('edition/addon %s already owned.', editions_addons_titles[t])
             else:
                 logger.warning('purchase button text not recognized: %s', purchase_button.text)
 
