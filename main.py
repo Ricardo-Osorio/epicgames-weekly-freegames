@@ -35,17 +35,20 @@ def read_env_variables():
 
 def execute():
     chrome_options = Options()
-    if not DEBUG:
-        chrome_options.add_argument('--headless')
     # bypass OS security model
     chrome_options.add_argument('--no-sandbox')
     # overcome limited resource problems
     chrome_options.add_argument('--disable-dev-shm-usage')
-
+    # path when run inside of docker container
     chrome_driver_path = '/usr/bin/chromedriver'
+
     if DEBUG:
-        # path when run inside docker container
         chrome_driver_path = './chromedriver'
+        # window size when run in headless mode.
+        # this is necessary as some styles are dynamic
+        chrome_options.add_argument('--window-size=800,600')
+    else:
+        chrome_options.add_argument('--headless')
 
     browser = webdriver.Chrome(chrome_driver_path, options=chrome_options)
     browser.get('https://www.epicgames.com/store/en-US/free-games/')
@@ -100,10 +103,6 @@ def execute():
         except NoSuchElementException:
             logger.debug('no cookies banner to close')
 
-        if len(games_found) < 1:
-            logger.info('no free games found')
-            return
-
         for i in range(len(games_found)):
             # need to wait for element to be clickable
             logger.debug('wait for and get all free games available')
@@ -146,7 +145,7 @@ def execute():
             if purchase_button.text == "OWNED":
                 logger.info('game \"%s\" already owned. Price was %s and %s', name, price, expires)
             elif purchase_button.text == 'GET':
-                logger.info('obtaining game %s', name)
+                logger.info('obtaining game \"%s\"', name)
 
                 # scroll to button
                 logger.debug('scroll to purchase button and click it')
@@ -176,7 +175,7 @@ def execute():
                 )))
                 logger.info('obtained game %s. Price was %s and %s', name, price, expires)
             elif purchase_button.text == 'SEE EDITIONS':
-                logger.warning('game %s has different editions available, this is not yet supported', name)
+                logger.warning('game \"%s\" has different editions available, this is not yet supported', name)
             else:
                 logger.warning('purchase button text not recognized: %s', purchase_button.text)
 
