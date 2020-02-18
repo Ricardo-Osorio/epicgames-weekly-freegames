@@ -11,6 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.action_chains import ActionChains
 
 
@@ -175,7 +176,62 @@ def execute():
                 )))
                 logger.info('obtained game %s. Price was %s and %s', name, price, expires)
             elif purchase_button.text == 'SEE EDITIONS':
-                logger.warning('game \"%s\" has different editions available, this is not yet supported', name)
+                editions_addons_buttons = WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_all_elements_located((
+                    By.XPATH, "//div[contains(@class,'Editions') or contains(@class, 'AddOns')]//div[contains(@class,'PurchaseButton-ctaButtons')]//button"
+                )))
+                for t in range(len(editions_addons_buttons)):
+                    editions_addons_titles = WebDriverWait(browser, TIMEOUT).until(
+                        EC.visibility_of_all_elements_located((
+                            By.XPATH, "//div[contains(@class,'Editions-title') or contains(@class, 'AddOns-title')]"
+                        )))
+                    editions_addons_buttons = WebDriverWait(browser, TIMEOUT).until(
+                        EC.visibility_of_all_elements_located((
+                            By.XPATH,
+                            "//div[contains(@class,'Editions') or contains(@class, 'AddOns')]//div[contains(@class,'PurchaseButton-ctaButtons')]//button"
+                        )))
+                    if editions_addons_buttons[t].text == 'GET':
+                        editions_addons_buttons[t].click()
+
+                        # wait until its visible and then click the purchase button
+                        logger.debug('find and click on the last purchase button')
+                        WebDriverWait(browser, LOGIN_TIMEOUT).until(
+                            EC.visibility_of_element_located((By.XPATH, "//button[contains(@class,'btn-primary')]"))
+                        ).click()
+
+                        # wait until its visible and then click the 'I Agree" popup
+                        # 'Refund and Right of Withdrawal Information' popup
+                        try:
+                            logger.debug('accept the conditions of refund popup')
+                            WebDriverWait(browser, TIMEOUT).until(
+                                EC.visibility_of_all_elements_located(
+                                    (By.XPATH, "//button[contains(@class,'btn-primary')]"))
+                            )[1].click()
+                        except (NoSuchElementException, LookupError) as ex:
+                            logger.debug('no refund conditions popup to accept')
+
+                        # Purchase should be complete. Checking for confirmation
+                        logger.debug('Wait for confirmation that checkout is complete')
+
+                        # this is failing every time
+                        try:
+                            WebDriverWait(browser, LOGIN_TIMEOUT).until(EC.visibility_of_element_located((
+                                By.XPATH,
+                                "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"
+                            )))
+                        except (StaleElementReferenceException, TimeoutException) as e:
+                            # test if javascript refreshes the element in the meanwhile, which
+                            # requires another query
+                            try:
+                                WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((
+                                    By.XPATH,
+                                    "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"
+                                )))
+                            except (StaleElementReferenceException, TimeoutException) as e:
+                                pass
+                        logger.info('obtained edition/extra %s.', editions_addons_titles[t].text)
+                        browser.execute_script("window.history.go(-1)")
+                    elif editions_addons_buttons[t].text == 'OWNED':
+                        logger.info('edition/addon %s already owned.', editions_addons_titles[t].text)
             else:
                 logger.warning('purchase button text not recognized: %s', purchase_button.text)
 
