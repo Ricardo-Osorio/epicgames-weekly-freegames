@@ -83,17 +83,25 @@ def execute():
             browser.find_element_by_id('continue').click()
 
         try:
-            # login succeeded
-            # need to wait for element to be clickable
+            # confirm login
+            logger.debug('search for wrong credentials message')
+            WebDriverWait(browser, LOGIN_TIMEOUT).until(EC.visibility_of_element_located((
+                By.XPATH, "//h6[contains(text(),'credentials') and contains(text(),'invalid')]"
+            )))
+            logger.critical('failed to login into account, credentials invalid')
+            return
+        except TimeoutException:
+            logger.debug('login succeeded')
+            pass
+
+        try:
+            # get free games available
             logger.debug('wait for and get all free games available')
-            games_found = WebDriverWait(browser, LOGIN_TIMEOUT).until(
+            games_found = WebDriverWait(browser, TIMEOUT).until(
                 EC.visibility_of_all_elements_located((By.XPATH, "//a[descendant::span[text()='Free Now']]"))
             )
         except TimeoutException:
-            # check if login failed
-            logger.debug('search for wrong credentials message')
-            browser.find_element_by_xpath("//h6[contains(text(),'credentials') and contains(text(),'invalid')]")
-            logger.critical('failed to login into account, credentials invalid')
+            logger.critical('no free games found')
             return
 
         # close cookie policy span as that interferes with clicking on the purchase button
