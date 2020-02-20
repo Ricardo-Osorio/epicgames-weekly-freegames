@@ -207,10 +207,10 @@ def main():
         try:
             EMAIL = re.search("[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+", EMAIL)[0]
         except TypeError:
-            print('email format not correct')
+            logger.critical('email format not correct')
             return
     if not PASSWORD:
-        print('password missing')
+        logger.critical('password missing')
         return
     logger.debug(
         'started with TIMEOUT: %i, LOGIN_TIMEOUT: %i, EMAIL: %s, password: %s',
