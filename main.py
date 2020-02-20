@@ -11,7 +11,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import WebDriverException
-from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.action_chains import ActionChains
 
 
@@ -32,6 +31,33 @@ def read_env_variables():
     SLEEPTIME = int(os.getenv('SLEEPTIME') or -1)
     value = os.getenv('TOTP') or None
     TOTP = None if value is None else pyotp.TOTP(value)
+
+
+def purchase_steps(browser):
+    # wait until its visible and then click the purchase button
+    logger.debug('find and click on the last purchase button')
+    WebDriverWait(browser, TIMEOUT).until(
+        EC.visibility_of_element_located((By.XPATH, "//button[contains(@class,'btn-primary')]"))
+    ).click()
+
+    # wait until its visible and then click the 'I Agree" popup
+    # 'Refund and Right of Withdrawal Information' popup
+    try:
+        logger.debug('accept the conditions of refund popup')
+        WebDriverWait(browser, TIMEOUT).until(
+            EC.visibility_of_all_elements_located(
+                (By.XPATH, "//button[contains(@class,'btn-primary')]"))
+        )[1].click()
+    except (NoSuchElementException, LookupError) as ex:
+        logger.debug('no refund conditions popup to accept')
+
+    logger.debug('Wait for confirmation that checkout is complete')
+
+    # Purchase should be complete. Checking for confirmation
+    WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((
+        By.XPATH,
+        "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"
+    )))
 
 
 def execute():
@@ -55,14 +81,12 @@ def execute():
     browser.get('https://www.epicgames.com/store/en-US/free-games/')
 
     try:
-        # need to wait for element to be clickable
         logger.debug('find and click on login button')
         el = WebDriverWait(browser, TIMEOUT).until(
             EC.element_to_be_clickable((By.XPATH, "//a[@href='/login']"))
         )
         el.click()
 
-        # need to wait for element to be clickable
         logger.debug('wait for email field on login page')
         el = WebDriverWait(browser, TIMEOUT).until(
             EC.element_to_be_clickable((By.ID, "usernameOrEmail"))
@@ -105,7 +129,6 @@ def execute():
             logger.debug('no cookies banner to close')
 
         for i in range(len(games_found)):
-            # need to wait for element to be clickable
             logger.debug('wait for and get all free games available')
             games_found = WebDriverWait(browser, TIMEOUT).until(
                 EC.visibility_of_all_elements_located((By.XPATH, "//a[descendant::span[text()='Free Now']]"))
@@ -139,42 +162,19 @@ def execute():
             price = browser.find_element_by_xpath("//s").text
 
             # date formatted as 'Sale ends 11/29/2019 at 3:59 PM'
-            logger.debug('extract aditional info from the purchase button')
+            logger.debug('extract additional info from the purchase button')
             expires = browser.find_element_by_xpath("//span[contains(text(),'Sale ends')]").text
 
-            if purchase_button.text == "OWNED":
-                logger.info('game \"%s\" already owned. Price was %s and %s', name, price, expires)
+            if purchase_button.text == 'OWNED':
+                logger.info('\"%s\" already owned. Price was %s and %s', name, price, expires)
             elif purchase_button.text == 'GET':
-                logger.info('obtaining game \"%s\"', name)
+                logger.info('obtaining \"%s\"', name)
 
-                # scroll to button
-                logger.debug('scroll to purchase button and click it')
-                ActionChains(browser).move_to_element(purchase_button).perform()
-                purchase_button.click()
+                purchase_steps(browser)
 
-                # wait until its visible and then click the purchase button
-                logger.debug('find and click on the last purchase button')
-                WebDriverWait(browser, TIMEOUT).until(
-                    EC.visibility_of_element_located((By.XPATH, "//button[contains(@class,'btn-primary')]"))
-                ).click()
-
-                # wait until its visible and then click the 'I Agree" popup
-                # 'Refund and Right of Withdrawal Information' popup
-                try:
-                    logger.debug('accept the conditions of refund popup')
-                    WebDriverWait(browser, TIMEOUT).until(
-                        EC.visibility_of_all_elements_located((By.XPATH, "//button[contains(@class,'btn-primary')]"))
-                    )[1].click()
-                except (NoSuchElementException, LookupError) as ex:
-                    logger.debug('no refund conditions popup to accept')
-
-                # Purchase should be complete. Checking for confirmation
-                logger.debug('Wait for confirmation that checkout is complete')
-                WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((
-                    By.XPATH, "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"
-                )))
-                logger.info('obtained game %s. Price was %s and %s', name, price, expires)
+                logger.info('obtained %s. Price was %s and %s', name, price, expires)
             elif purchase_button.text == 'SEE EDITIONS':
+                logger.debug('processing editions for \"%s\"', name)
                 # used to know the number of elements and titles
                 # without having to query on every refresh
                 editions_addons_titles = WebDriverWait(browser, TIMEOUT).until(
@@ -190,38 +190,17 @@ def execute():
                             By.XPATH,
                             "//div[contains(@class,'Editions') or contains(@class, 'AddOns')]//div[contains(@class,'PurchaseButton-ctaButtons')]//button"
                         )))
-                    if editions_addons_buttons[t].text == 'GET':
+
+                    if editions_addons_buttons[t].text == 'OWNED':
+                        logger.info('\"%s\" already owned', editions_addons_titles[t])
+                    elif editions_addons_buttons[t].text == 'GET':
                         editions_addons_buttons[t].click()
 
-                        # wait until its visible and then click the purchase button
-                        logger.debug('find and click on the last purchase button')
-                        WebDriverWait(browser, LOGIN_TIMEOUT).until(
-                            EC.visibility_of_element_located((By.XPATH, "//button[contains(@class,'btn-primary')]"))
-                        ).click()
+                        purchase_steps(browser)
 
-                        # wait until its visible and then click the 'I Agree" popup
-                        # 'Refund and Right of Withdrawal Information' popup
-                        try:
-                            logger.debug('accept the conditions of refund popup')
-                            WebDriverWait(browser, TIMEOUT).until(
-                                EC.visibility_of_all_elements_located(
-                                    (By.XPATH, "//button[contains(@class,'btn-primary')]"))
-                            )[1].click()
-                        except (NoSuchElementException, LookupError) as ex:
-                            logger.debug('no refund conditions popup to accept')
+                        logger.info('obtained \"%s\"', editions_addons_titles[t])
 
-                        logger.debug('Wait for confirmation that checkout is complete')
-
-                        # Purchase should be complete. Checking for confirmation
-                        WebDriverWait(browser, LOGIN_TIMEOUT).until(EC.visibility_of_element_located((
-                            By.XPATH,
-                            "//h1/span[contains(text(),'Install')]|//span[contains(text(),'Thank you for buying')]"
-                        )))
-
-                        logger.info('obtained edition/extra %s.', editions_addons_titles[t])
                         browser.execute_script("window.history.go(-1)")
-                    elif editions_addons_buttons[t].text == 'OWNED':
-                        logger.info('edition/addon %s already owned.', editions_addons_titles[t])
             else:
                 logger.warning('purchase button text not recognized: %s', purchase_button.text)
 
