@@ -202,8 +202,14 @@ def main():
     read_env_variables()
     logging.basicConfig(level=logging.ERROR)
     logger.setLevel(getattr(logging, LOGLEVEL, "INFO"))
-    if EMAIL == "" or PASSWORD == "":
-        print('credentials missing')
+    if EMAIL:
+        try:
+            EMAIL = re.search("[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+", EMAIL)[0]
+        except TypeError:
+            print('email format not correct')
+            return
+    if not PASSWORD:
+        print('password missing')
         return
     logger.debug(
         'started with TIMEOUT: %i, LOGIN_TIMEOUT: %i, EMAIL: %s, password: %s',
