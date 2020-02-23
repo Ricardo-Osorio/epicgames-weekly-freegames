@@ -181,8 +181,7 @@ def execute():
                     EC.visibility_of_all_elements_located((
                         By.XPATH, "//div[contains(@class,'Editions-title') or contains(@class, 'AddOns-title')]"
                     )))
-                for x in range(len(editions_addons_titles)):
-                    editions_addons_titles[x] = editions_addons_titles[x].text
+                editions_addons_titles = [i.text for i in editions_addons_titles]
 
                 for t in range(len(editions_addons_titles)):
                     editions_addons_buttons = WebDriverWait(browser, TIMEOUT).until(
@@ -192,13 +191,13 @@ def execute():
                         )))
 
                     if editions_addons_buttons[t].text == 'OWNED':
-                        logger.info('\"%s\" already owned', editions_addons_titles[t])
+                        logger.info('\"%s - %s\" already owned', name, editions_addons_titles[t])
                     elif editions_addons_buttons[t].text == 'GET':
                         editions_addons_buttons[t].click()
 
                         purchase_steps(browser)
 
-                        logger.info('obtained \"%s\"', editions_addons_titles[t])
+                        logger.info('obtained \"%s - %s\"', name, editions_addons_titles[t])
 
                         browser.execute_script("window.history.go(-1)")
             else:
