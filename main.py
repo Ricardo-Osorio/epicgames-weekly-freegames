@@ -73,6 +73,18 @@ def execute():
             EC.element_to_be_clickable((By.ID, 'login'))
         ).click()
 
+        try:
+            logger.debug('Checking for captcha')
+            el = WebDriverWait(browser, TIMEOUT).until(
+                EC.presence_of_element_located(
+                	(By.XPATH, 
+                	'//iframe[@title="arkose-enforcement"]'))
+            )
+            logger.critical('Captcha found. Can\'t procede any further.')
+            return
+        except TimeoutException:
+            logger.debug('Captcha is not detected.')
+
         if TOTP is not None:
             logger.debug('wait for 2fa field on login page')
             el = WebDriverWait(browser, TIMEOUT).until(
