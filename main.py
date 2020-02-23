@@ -48,7 +48,7 @@ def purchase_steps(browser):
             EC.visibility_of_all_elements_located(
                 (By.XPATH, "//button[contains(@class,'btn-primary')]"))
         )[1].click()
-    except (NoSuchElementException, LookupError) as ex:
+    except (NoSuchElementException, TimeoutException, LookupError) as ex:
         logger.debug('no refund conditions popup to accept')
 
     logger.debug('Wait for confirmation that checkout is complete')
