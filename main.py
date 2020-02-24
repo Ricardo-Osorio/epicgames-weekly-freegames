@@ -3,7 +3,6 @@ import time
 import logging
 import pyotp
 import traceback
-import re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -239,14 +238,8 @@ def main():
     read_env_variables()
     logging.basicConfig(level=logging.ERROR)
     logger.setLevel(getattr(logging, LOGLEVEL, "INFO"))
-    if EMAIL:
-        try:
-            EMAIL = re.search("[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+", EMAIL)[0]
-        except TypeError:
-            logger.critical('email format not correct')
-            return
-    if not PASSWORD:
-        logger.critical('password missing')
+    if EMAIL == "" or PASSWORD == "":
+        print('credentials missing')
         return
     logger.debug(
         'started with TIMEOUT: %i, LOGIN_TIMEOUT: %i, EMAIL: %s, password: %s',
