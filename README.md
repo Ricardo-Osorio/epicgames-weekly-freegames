@@ -14,7 +14,7 @@ docker pull ricosorio/epicgames-weekly-freegames:latest
 ```
 And run a docker container from the newly downloaded image:
 ```
-docker run -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
+docker run -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> ricosorio/epicgames-weekly-freegames
 ```
 Replacing the environment variables `EMAIL` and `PASSWORD` for your epicgames store credentials.
 
