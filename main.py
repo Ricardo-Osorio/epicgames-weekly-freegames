@@ -1,17 +1,14 @@
-import os
-import time
 import logging
+import os
 import pyotp
+import time
 import traceback
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import TimeoutException
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.common.action_chains import ActionChains
 
 
 def read_env_variables():
@@ -189,6 +186,7 @@ def execute():
                 logger.info('\"%s\" already owned. Price was %s and %s', name, price, expires)
             elif purchase_button.text == 'GET':
                 logger.info('obtaining \"%s\"', name)
+                purchase_button.click()
 
                 purchase_steps(browser)
 
