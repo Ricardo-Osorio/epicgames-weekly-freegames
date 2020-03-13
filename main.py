@@ -11,16 +11,17 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 
 
+FREE_GAMES_PAGE_URL = 'https://www.epicgames.com/store/en-US/free-games/'
+
+
 def read_env_variables():
-    global TIMEOUT, LOGIN_TIMEOUT, EMAIL, PASSWORD, LOGLEVEL, SLEEPTIME, TOTP, DEBUG
+    global TIMEOUT, EMAIL, PASSWORD, LOGLEVEL, SLEEPTIME, TOTP, DEBUG
 
     # dev environment
     DEBUG = os.getenv('DEBUG') is not None
 
-    value = os.getenv('TIMEOUT') or 5
+    value = os.getenv('TIMEOUT') or 20
     TIMEOUT = int(value)
-    value = os.getenv('LOGIN_TIMEOUT') or 10
-    LOGIN_TIMEOUT = int(value)
 
     EMAIL = os.getenv('EMAIL') or ''
     PASSWORD = os.getenv('PASSWORD') or ''
@@ -28,6 +29,26 @@ def read_env_variables():
     SLEEPTIME = int(os.getenv('SLEEPTIME') or -1)
     value = os.getenv('TOTP') or None
     TOTP = None if value is None else pyotp.TOTP(value)
+
+
+def open_browser():
+    chrome_options = Options()
+    # bypass OS security model
+    chrome_options.add_argument('--no-sandbox')
+    # overcome limited resource problems
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    # path when run inside of docker container
+    chrome_driver_path = '/usr/bin/chromedriver'
+
+    if DEBUG:
+        chrome_driver_path = './chromedriver'
+        # window size when run in headless mode.
+        # this is necessary as some styles are dynamic
+        chrome_options.add_argument('--window-size=800,600')
+    else:
+        chrome_options.add_argument('--headless')
+
+    return webdriver.Chrome(chrome_driver_path, options=chrome_options)
 
 
 def purchase_steps(browser):
@@ -58,24 +79,8 @@ def purchase_steps(browser):
 
 
 def execute():
-    chrome_options = Options()
-    # bypass OS security model
-    chrome_options.add_argument('--no-sandbox')
-    # overcome limited resource problems
-    chrome_options.add_argument('--disable-dev-shm-usage')
-    # path when run inside of docker container
-    chrome_driver_path = '/usr/bin/chromedriver'
-
-    if DEBUG:
-        chrome_driver_path = './chromedriver'
-        # window size when run in headless mode.
-        # this is necessary as some styles are dynamic
-        chrome_options.add_argument('--window-size=800,600')
-    else:
-        chrome_options.add_argument('--headless')
-
-    browser = webdriver.Chrome(chrome_driver_path, options=chrome_options)
-    browser.get('https://www.epicgames.com/store/en-US/free-games/')
+    browser = open_browser()
+    browser.get(FREE_GAMES_PAGE_URL)
 
     try:
         logger.debug('find and click on login button')
@@ -97,15 +102,15 @@ def execute():
 
         try:
             logger.debug('Checking for captcha')
-            el = WebDriverWait(browser, TIMEOUT).until(
-                EC.presence_of_element_located(
-                	(By.XPATH, 
-                	'//iframe[@title="arkose-enforcement"]'))
-            )
+            WebDriverWait(browser, TIMEOUT).until(
+                EC.presence_of_element_located((
+                    By.XPATH,
+                    '//iframe[@title="arkose-enforcement"]'
+                )))
             logger.critical('Captcha found. Can\'t procede any further.')
             return
         except TimeoutException:
-            logger.debug('Captcha is not detected.')
+            logger.debug('captcha not detected.')
 
         if TOTP is not None:
             logger.debug('wait for 2fa field on login page')
@@ -113,13 +118,13 @@ def execute():
                 EC.element_to_be_clickable((By.ID, "code"))
             )
             el.send_keys(TOTP.now())
-            logger.debug('logging in with 2fa')
+            logger.debug('logging in with 2FA')
             browser.find_element_by_id('continue').click()
 
         try:
             # confirm login
             logger.debug('search for wrong credentials message')
-            WebDriverWait(browser, LOGIN_TIMEOUT).until(EC.visibility_of_element_located((
+            WebDriverWait(browser, TIMEOUT).until(EC.visibility_of_element_located((
                 By.XPATH, "//h6[contains(text(),'credentials') and contains(text(),'invalid')]"
             )))
             logger.critical('failed to login into account, credentials invalid')
@@ -138,9 +143,9 @@ def execute():
             logger.critical('no free games found')
             return
 
-        # close cookie policy span as that interferes with clicking on the purchase button
         try:
             logger.debug('close the cookies banner')
+            # close cookie policy span as it interferes with clicking on the purchase button
             browser.find_element_by_xpath("//button[@id='euCookieAccept']").click()
         except NoSuchElementException:
             logger.debug('no cookies banner to close')
@@ -151,7 +156,6 @@ def execute():
                 EC.visibility_of_all_elements_located((By.XPATH, "//a[descendant::span[text()='Free Now']]"))
             )
 
-            # click game
             games_found[i].click()
 
             # mature content block
@@ -164,22 +168,21 @@ def execute():
             except TimeoutException:
                 logger.debug('no mature content block to bypass')
 
-            # need to wait for element to be visible (it's not clickable if already owned)
             logger.debug('find the purchase button')
             purchase_button = WebDriverWait(browser, TIMEOUT).until(
                 EC.visibility_of_element_located((By.XPATH, "//button[contains(@class,'Purchase')]"))
             )
 
-            # name of the game (responsive UI element)
-            logger.debug('find the game title')
+            # name of the game
+            logger.debug('extract game title')
             name = browser.find_element_by_xpath("//h1[contains(@class,'NavigationVertical')]").text
 
             # price formatted as '£11.99'
-            logger.debug('find the game price')
+            logger.debug('extract game price')
             price = browser.find_element_by_xpath("//s").text
 
             # date formatted as 'Sale ends 11/29/2019 at 3:59 PM'
-            logger.debug('extract additional info from the purchase button')
+            logger.debug('extract sales end date')
             expires = browser.find_element_by_xpath("//span[contains(text(),'Sale ends')]").text
 
             if purchase_button.text == 'OWNED':
@@ -222,7 +225,7 @@ def execute():
                 logger.warning('purchase button text not recognized: %s', purchase_button.text)
 
             # navigate back to free games page
-            browser.get('https://www.epicgames.com/store/en-US/free-games/')
+            browser.get(FREE_GAMES_PAGE_URL)
         logger.info('all games processed')
     except (TimeoutException, NoSuchElementException, WebDriverException) as ex:
         logger.critical(traceback.format_exc())
@@ -240,8 +243,8 @@ def main():
         print('credentials missing')
         return
     logger.debug(
-        'started with TIMEOUT: %i, LOGIN_TIMEOUT: %i, EMAIL: %s, password: %s',
-        TIMEOUT, LOGIN_TIMEOUT, EMAIL, len(PASSWORD) * "*",
+        'started with TIMEOUT: %i, EMAIL: %s, password: %s',
+        TIMEOUT, EMAIL, len(PASSWORD) * "*",
     )
     execute()
     while SLEEPTIME >= 0:

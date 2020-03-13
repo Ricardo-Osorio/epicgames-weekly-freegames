@@ -38,7 +38,7 @@ Different options can be provided to alter the output or execution of the progra
 
 Running a docker container with these:
 ```
-docker run -e TIMEOUT=15 -e LOGIN_TIMEOUT=20 -e LOGLEVEL=DEBUG -e SLEEPTIME=43200 -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> epicgames
+docker run -e TIMEOUT=15 -e LOGIN_TIMEOUT=20 -e LOGLEVEL=DEBUG -e SLEEPTIME=43200 -e EMAIL=<EMAIL> -e PASSWORD=<PASSWORD> ricosorio/epicgames-weekly-freegames
 ```
 
 ## Docker Compose
