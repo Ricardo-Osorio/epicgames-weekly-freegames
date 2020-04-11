@@ -1,6 +1,9 @@
 # Automatically get the epicgames store weekly free games
 I like free games but I don't like repeating the same process over and over again when it can be automated... And that's why I made this!
 
+## Before using this
+This was an introductory project to web scrapping for me and, due to its nature, any update to the site is a potential reason for the script to stop working. As such, I recommend that you check @charlocharlie's approach to this problem using its API instead! https://github.com/charlocharlie/epicgames-freegames-node
+
 ## What it is
 This is a simple python3.7 script making use of [selenium webdriver](https://selenium.dev/) and [chrome driver](https://sites.google.com/a/chromium.org/chromedriver/) to run run chrome in headless mode, navigate to the epicgames store, login into your account and redeem all weekly free games available. All of this inside of a docker container.
 
